@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Chuvas Intensas RJ 2025/2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f4f3ef;
+    --surface: #ffffff;
+    --surface2: #f0efe9;
+    --border: rgba(0,0,0,0.1);
+    --border2: rgba(0,0,0,0.18);
+    --text: #1a1a18;
+    --text2: #6b6a65;
+    --text3: #9b9a95;
+    --blue: #185FA5;
+    --blue-bg: #E6F1FB;
+    --blue-mid: #378ADD;
+    --red: #A32D2D;
+    --red-bg: #FCEBEB;
+    --red-mid: #E24B4A;
+    --amber: #854F0B;
+    --amber-bg: #FAEEDA;
+    --amber-mid: #EF9F27;
+    --green: #3B6D11;
+    --green-bg: #EAF3DE;
+    --green-mid: #5DCAA5;
+    --teal: #5DCAA5;
+    --coral: #D85A30;
+    --radius: 10px;
+    --radius-lg: 14px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.07), 0 4px 12px rgba(0,0,0,0.04);
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* HEADER */
+  .site-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    height: 60px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+  }
+  .header-logo {
+    width: 32px; height: 32px;
+    background: var(--red-mid);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .header-logo svg { width: 18px; height: 18px; fill: white; }
+  .header-title { font-size: 15px; font-weight: 600; color: var(--text); }
+  .header-sub { font-size: 12px; color: var(--text2); margin-left: 4px; }
+  .header-badge {
+    margin-left: auto;
+    background: var(--red-bg);
+    color: var(--red);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.3px;
+  }
+
+  /* LAYOUT */
+  .main { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+  /* FILTERS BAR */
+  .filters-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 14px 18px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow);
+  }
+  .filter-group { display: flex; align-items: center; gap: 6px; }
+  .filter-label { font-size: 11px; color: var(--text2); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+  .filters-bar select {
+    font-size: 13px;
+    padding: 7px 28px 7px 11px;
+    border-radius: 8px;
+    border: 1px solid var(--border2);
+    background: var(--bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b6a65' fill='none' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 10px center;
+    color: var(--text);
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    font-family: inherit;
+    transition: border-color 0.15s;
+    min-width: 148px;
+  }
+  .filters-bar select:focus { outline: none; border-color: var(--blue-mid); }
+  .sep { width: 1px; height: 24px; background: var(--border); }
+  .reset-btn {
+    font-size: 12px; padding: 7px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border2);
+    background: transparent;
+    color: var(--text2);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+    display: flex; align-items: center; gap: 5px;
+    margin-left: auto;
+  }
+  .reset-btn:hover { background: var(--surface2); color: var(--text); }
+  .result-count { font-size: 12px; color: var(--text3); }
+
+  /* KPI GRID */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 1.5rem;
+  }
+  .kpi {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+    transition: transform 0.15s;
+  }
+  .kpi:hover { transform: translateY(-1px); }
+  .kpi-icon { font-size: 20px; margin-bottom: 8px; }
+  .kpi-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .kpi-value { font-size: 32px; font-weight: 700; line-height: 1; color: var(--text); }
+  .kpi-sub { font-size: 11px; color: var(--text3); margin-top: 5px; }
+  .kpi.k-blue { background: var(--blue-bg); border-color: rgba(55,138,221,0.2); }
+  .kpi.k-blue .kpi-value { color: var(--blue); }
+  .kpi.k-blue .kpi-sub { color: var(--blue-mid); }
+  .kpi.k-red { background: var(--red-bg); border-color: rgba(226,75,74,0.2); }
+  .kpi.k-red .kpi-value { color: var(--red); }
+  .kpi.k-red .kpi-sub { color: var(--red-mid); }
+  .kpi.k-amber { background: var(--amber-bg); border-color: rgba(239,159,39,0.25); }
+  .kpi.k-amber .kpi-value { color: var(--amber); }
+  .kpi.k-amber .kpi-sub { color: var(--amber-mid); }
+
+  /* CHARTS ROW */
+  .charts-row {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .charts-row-2 {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 18px 20px;
+    box-shadow: var(--shadow);
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .feb-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: #FAECE7; color: #993C1D;
+    font-size: 10px; font-weight: 600;
+    padding: 3px 8px; border-radius: 10px;
+    letter-spacing: 0.2px;
+  }
+
+  /* LEGEND */
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 12px; }
+  .legend span { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); }
+  .ld { width: 11px; height: 11px; border-radius: 3px; flex-shrink: 0; }
+
+  /* REDEC BARS */
+  .redec-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .redec-lbl { width: 62px; font-size: 11px; color: var(--text2); flex-shrink: 0; }
+  .redec-track {
+    flex: 1; height: 16px;
+    background: var(--surface2);
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+  }
+  .redec-seg { height: 100%; transition: width 0.4s ease; }
+  .redec-count { font-size: 11px; color: var(--text2); width: 26px; text-align: right; flex-shrink: 0; }
+  .redec-row.is-peak .redec-lbl { font-weight: 700; color: var(--text); }
+  .redec-row.is-peak .redec-count { font-weight: 700; color: var(--text); }
+
+  /* TABLE */
+  .table-scroll { overflow-x: auto; margin-top: 4px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 560px; }
+  thead th {
+    font-size: 10px; font-weight: 600; color: var(--text2);
+    text-transform: uppercase; letter-spacing: 0.5px;
+    padding: 8px 10px;
+    border-bottom: 1.5px solid var(--border);
+    text-align: left;
+    background: var(--surface);
+    position: sticky; top: 0;
+  }
+  tbody td { padding: 8px 10px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: var(--bg); }
+  .badge {
+    display: inline-block; padding: 3px 9px;
+    border-radius: 12px; font-size: 10px; font-weight: 600; white-space: nowrap;
+  }
+  .g1 { background: var(--green-bg); color: var(--green); }
+  .g2 { background: var(--amber-bg); color: var(--amber); }
+  .g3 { background: var(--red-bg); color: var(--red); }
+  .empty-state {
+    text-align: center; color: var(--text3);
+    padding: 3rem 1rem; font-size: 13px;
+  }
+
+  /* FOOTER */
+  .footer {
+    margin-top: 2.5rem;
+    text-align: center;
+    font-size: 11px;
+    color: var(--text3);
+    padding-bottom: 2rem;
+  }
+  .footer a { color: var(--text2); text-decoration: none; }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .charts-row { grid-template-columns: 1fr; }
+    .site-header { padding: 0 1rem; }
+    .main { padding: 1.25rem 1rem; }
+  }
+  @media (max-width: 560px) {
+    .kpi-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .kpi-value { font-size: 26px; }
+    .filters-bar { gap: 8px; }
+    .filters-bar select { min-width: 120px; }
+    .header-sub { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-logo">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2C7 2 4 6.5 4 10c0 5.5 8 12 8 12s8-6.5 8-12c0-3.5-3-8-8-8zm0 10.5c-1.4 0-2.5-1.1-2.5-2.5S10.6 7.5 12 7.5 14.5 8.6 14.5 10 13.4 12.5 12 12.5z"/>
+    </svg>
+  </div>
+  <span class="header-title">Municípios Impactados</span>
+  <span class="header-sub">Defesa Civil RJ · Matriz ICR</span>
+  <div class="header-badge">🌧 Verão 2025/2026</div>
+</header>
+
+<main class="main">
+
+  <!-- FILTERS -->
+  <div class="filters-bar">
+    <div class="filter-group">
+      <span class="filter-label">Período</span>
+      <select id="fMes" onchange="render()">
+        <option value="">Todos os meses</option>
+        <option value="2025-11">Nov/2025</option>
+        <option value="2025-12">Dez/2025</option>
+        <option value="2026-01">Jan/2026</option>
+        <option value="2026-02">⚠ Fev/2026</option>
+        <option value="2026-03">Mar/2026</option>
+        <option value="2026-04">Abr/2026</option>
+      </select>
+    </div>
+    <div class="sep"></div>
+    <div class="filter-group">
+      <span class="filter-label">REDEC</span>
+      <select id="fRedec" onchange="render()">
+        <option value="">Todas as REDECs</option>
+      </select>
+    </div>
+    <div class="sep"></div>
+    <div class="filter-group">
+      <span class="filter-label">Grau</span>
+      <select id="fGrau" onchange="render()">
+        <option value="">Todos os graus</option>
+        <option value="GRAU 1 - MODERADO IMPACTO">Grau 1 — Moderado</option>
+        <option value="GRAU 2 - ALTO IMPACTO">Grau 2 — Alto</option>
+        <option value="GRAU 3 - MUITO ALTO IMPACTO">Grau 3 — Muito alto</option>
+      </select>
+    </div>
+    <span class="result-count" id="resultCount"></span>
+    <button class="reset-btn" onclick="resetFilters()">
+      ↺ Limpar filtros
+    </button>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="kpi-label">Total de ocorrências</div>
+      <div class="kpi-value" id="kTotalVal">—</div>
+      <div class="kpi-sub" id="kTotalSub">—</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Municípios atingidos</div>
+      <div class="kpi-value" id="kMunicVal">—</div>
+      <div class="kpi-sub" id="kMunicSub">—</div>
+    </div>
+    <div class="kpi k-blue">
+      <div class="kpi-label">Mês mais impactante</div>
+      <div class="kpi-value" id="kFevVal">—</div>
+      <div class="kpi-sub" id="kFevSub">—</div>
+    </div>
+    <div class="kpi k-red">
+      <div class="kpi-label">Ocorrências Grau 3</div>
+      <div class="kpi-value" id="kG3Val">—</div>
+      <div class="kpi-sub" id="kG3Sub">—</div>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW 1 -->
+  <div class="charts-row">
+    <div class="card">
+      <div class="card-title">Ocorrências por mês</div>
+      <div class="legend">
+        <span><span class="ld" style="background:#5DCAA5"></span>Grau 1 — Moderado</span>
+        <span><span class="ld" style="background:#EF9F27"></span>Grau 2 — Alto</span>
+        <span><span class="ld" style="background:#E24B4A"></span>Grau 3 — Muito alto</span>
+      </div>
+      <div style="position:relative;height:220px">
+        <canvas id="chartMes" role="img" aria-label="Gráfico de barras de ocorrências mensais por grau">Ocorrências mensais por grau de impacto.</canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Distribuição por grau</div>
+      <div style="position:relative;height:180px;margin-bottom:12px">
+        <canvas id="chartGrau" role="img" aria-label="Gráfico de rosca com distribuição por grau">Distribuição por grau.</canvas>
+      </div>
+      <div id="grauLegend" class="legend" style="justify-content:center"></div>
+    </div>
+  </div>
+
+  <!-- REDEC BAR CHART -->
+  <div class="card" style="margin-bottom:12px">
+    <div class="card-title">
+      Ocorrências por REDEC
+      <span id="redecFebLabel"></span>
+    </div>
+    <div class="legend">
+      <span><span class="ld" style="background:#5DCAA5"></span>Grau 1</span>
+      <span><span class="ld" style="background:#EF9F27"></span>Grau 2</span>
+      <span><span class="ld" style="background:#E24B4A"></span>Grau 3</span>
+    </div>
+    <div id="redecBars"></div>
+  </div>
+
+  <!-- TOP MUNICÍPIOS -->
+  <div class="charts-row" style="margin-bottom:12px">
+    <div class="card" style="grid-column:1/-1">
+      <div class="card-title">Top municípios mais impactados</div>
+      <div id="topMunic" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px"></div>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="card">
+    <div class="card-title">Registro de ocorrências <span id="tableCount" style="font-size:11px;font-weight:400;color:var(--text3)"></span></div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr>
+          <th>Data</th>
+          <th>Município</th>
+          <th>REDEC</th>
+          <th>Evento</th>
+          <th>Classificação</th>
+          <th>Descrição</th>
+        </tr></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<footer class="footer">
+  <p>Fontes: CEMADEN-RJ · INMET · SEDEC-RJ · REDECs · Matriz ICR (uso experimental) &nbsp;|&nbsp; Chuvas Intensas — Verão 2025/2026</p>
+</footer>
+
+<script>
+const RAW = [{"DATA_STR":"2025-11-02","MUNICIPIO":"Aperibé","REDEC":11,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Alagamentos, casas atingidas e repercussão nas redes sociais"},{"DATA_STR":"2025-11-04","MUNICIPIO":"Cantagalo","REDEC":8,"EVENTO":"Cabeça d'água","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Assustou moradores - repercussão na mídia"},{"DATA_STR":"2025-11-08","MUNICIPIO":"Teresópolis","REDEC":7,"EVENTO":"Vendaval","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Quedas de árvores - interdições de vias e queda de energia"},{"DATA_STR":"2025-11-08","MUNICIPIO":"Rio de Janeiro","REDEC":1,"EVENTO":"Vendaval","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Quedas de árvores - interdições de vias e queda de energia"},{"DATA_STR":"2025-11-23","MUNICIPIO":"Itaocara","REDEC":11,"EVENTO":"Vento, chuva e Granizo","CLASSIFICACAO":"GRAU 2 - ALTO IMPACTO","DESCRICAO":"Desabamento de telhado e outros impactos (árvores, alagamento etc)"},{"DATA_STR":"2025-11-28","MUNICIPIO":"Rio de Janeiro","REDEC":1,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Bolsões, alagamentos e acionamento de sirenes (Houve Ajuda Humanitária - SEDEC-RJ)"},{"DATA_STR":"2025-12-02","MUNICIPIO":"Rio das Ostras","REDEC":9,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Queda de estrutura (galpão do Iate Clube) e queda de árvores"},{"DATA_STR":"2025-12-03","MUNICIPIO":"S. F. Itabapoana","REDEC":10,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Quedas de árvores, destelhamento, obstrução de estradas"},{"DATA_STR":"2025-12-15","MUNICIPIO":"Bom Jardim","REDEC":8,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Quedas de árvores, destelhamento, obstrução de estradas"},{"DATA_STR":"2025-12-15","MUNICIPIO":"Macuco","REDEC":8,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Quedas de árvores, deslizamentos, alagamentos, desabrigados"},{"DATA_STR":"2025-12-17","MUNICIPIO":"Duque de Caxias","REDEC":2,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Sirene acionada, alagamentos"},{"DATA_STR":"2025-12-17","MUNICIPIO":"Bom Jardim","REDEC":8,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Quedas de árvores, deslizamentos"},{"DATA_STR":"2025-12-17","MUNICIPIO":"Sta. M. Madalena","REDEC":8,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Quedas de árvores, deslizamentos"},{"DATA_STR":"2025-12-17","MUNICIPIO":"Petrópolis","REDEC":7,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 2 - ALTO IMPACTO","DESCRICAO":"Cell Broadcast (4), 14 Sirenes acionadas, transbordamentos, carros arrastados"},{"DATA_STR":"2025-12-17","MUNICIPIO":"Teresópolis","REDEC":7,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Sirene acionada, quedas de árvores, deslizamentos"},{"DATA_STR":"2025-12-17","MUNICIPIO":"Rio de Janeiro","REDEC":1,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Alagamentos, quedas de árvores, deslizamentos"},{"DATA_STR":"2026-01-02","MUNICIPIO":"Casimiro de Abreu","REDEC":9,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Quedas de árvores, destelhamento / desabamento"},{"DATA_STR":"2026-01-02","MUNICIPIO":"Rio das Ostras","REDEC":9,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Quedas de árvores, destelhamento / desabamento"},{"DATA_STR":"2026-01-05","MUNICIPIO":"Rio de Janeiro","REDEC":1,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Deslizamentos, alagamentos, quedas de árvores"},{"DATA_STR":"2026-01-07","MUNICIPIO":"Nova Iguaçu","REDEC":2,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Deslizamentos, quedas de árvores, alagamentos"},{"DATA_STR":"2026-01-08","MUNICIPIO":"Mangaratiba","REDEC":4,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Deslizamentos, quedas de árvores, destelhamentos"},{"DATA_STR":"2026-01-08","MUNICIPIO":"Angra dos Reis","REDEC":4,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Deslizamentos, quedas de árvores, destelhamentos"},{"DATA_STR":"2026-01-10","MUNICIPIO":"Bom Jardim","REDEC":8,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Quedas de árvores, deslizamentos"},{"DATA_STR":"2026-01-10","MUNICIPIO":"Sta. M. Madalena","REDEC":8,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Quedas de árvores, deslizamentos"},{"DATA_STR":"2026-01-14","MUNICIPIO":"Rio Claro","REDEC":6,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 3 - MUITO ALTO IMPACTO","DESCRICAO":"Deslizamentos, óbitos, desabrigados"},{"DATA_STR":"2026-01-14","MUNICIPIO":"Itaocara","REDEC":11,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Quedas de árvores, destelhamentos, deslizamentos"},{"DATA_STR":"2026-01-15","MUNICIPIO":"Duque de Caxias","REDEC":2,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Alagamentos, deslizamentos, quedas de árvores"},{"DATA_STR":"2026-01-15","MUNICIPIO":"Rio de Janeiro","REDEC":1,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Alagamentos, deslizamentos, quedas de árvores"},{"DATA_STR":"2026-01-21","MUNICIPIO":"Conceição de Macabu","REDEC":9,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Quedas de árvores, deslizamentos, destelhamentos"},{"DATA_STR":"2026-01-21","MUNICIPIO":"São Fidélis","REDEC":10,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Quedas de árvores, deslizamentos, destelhamentos"},{"DATA_STR":"2026-01-21","MUNICIPIO":"Rio das Ostras","REDEC":9,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Quedas de árvores"},{"DATA_STR":"2026-01-21","MUNICIPIO":"Itaocara","REDEC":11,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Quedas de árvores"},{"DATA_STR":"2026-01-24","MUNICIPIO":"Barra Mansa","REDEC":5,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Deslizamentos, quedas de árvores"},{"DATA_STR":"2026-01-24","MUNICIPIO":"Resende","REDEC":5,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Deslizamentos, quedas de árvores"},{"DATA_STR":"2026-01-25","MUNICIPIO":"Rio de Janeiro","REDEC":1,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 2 - ALTO IMPACTO","DESCRICAO":"Deslizamentos, alagamentos, quedas de árvores, sirenes"},{"DATA_STR":"2026-01-25","MUNICIPIO":"Nova Iguaçu","REDEC":2,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 2 - ALTO IMPACTO","DESCRICAO":"Deslizamentos, quedas de árvores, alagamentos"},{"DATA_STR":"2026-01-25","MUNICIPIO":"Maricá","REDEC":3,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Quedas de árvores, deslizamentos"},{"DATA_STR":"2026-01-25","MUNICIPIO":"Niterói","REDEC":3,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Quedas de árvores, deslizamentos"},{"DATA_STR":"2026-01-29","MUNICIPIO":"Paty do Alferes","REDEC":5,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 3 - MUITO ALTO IMPACTO","DESCRICAO":"Deslizamentos, desabamentos, óbitos"},{"DATA_STR":"2026-02-01","MUNICIPIO":"Niterói","REDEC":3,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Quedas de árvores, deslizamentos, alagamentos"},{"DATA_STR":"2026-02-01","MUNICIPIO":"Duque de Caxias","REDEC":2,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Alagamentos, deslizamentos, quedas de árvores"},{"DATA_STR":"2026-02-01","MUNICIPIO":"Rio de Janeiro","REDEC":1,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Alagamentos, deslizamentos, quedas de árvores"},{"DATA_STR":"2026-02-01","MUNICIPIO":"Paraty","REDEC":4,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Deslizamentos, quedas de árvores"},{"DATA_STR":"2026-02-02","MUNICIPIO":"Cantagalo","REDEC":8,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 3 - MUITO ALTO IMPACTO","DESCRICAO":"Deslizamentos, desabamentos, alagamentos, decretação SE"},{"DATA_STR":"2026-02-02","MUNICIPIO":"Itaperuna","REDEC":11,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 3 - MUITO ALTO IMPACTO","DESCRICAO":"Deslizamentos, desabamentos, inundações, decretação SE"},{"DATA_STR":"2026-02-02","MUNICIPIO":"São Sebastião do Alto","REDEC":8,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 3 - MUITO ALTO IMPACTO","DESCRICAO":"Deslizamentos, desabamentos, inundações, decretação SE"},{"DATA_STR":"2026-02-02","MUNICIPIO":"Bom Jardim","REDEC":8,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 2 - ALTO IMPACTO","DESCRICAO":"Deslizamentos, quedas de árvores, destelhamentos"},{"DATA_STR":"2026-02-02","MUNICIPIO":"Sta. M. Madalena","REDEC":8,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Quedas de árvores, deslizamentos"},{"DATA_STR":"2026-02-04","MUNICIPIO":"Paraty","REDEC":4,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 3 - MUITO ALTO IMPACTO","DESCRICAO":"Deslizamentos, inundações, estradas bloqueadas"},{"DATA_STR":"2026-02-04","MUNICIPIO":"Angra dos Reis","REDEC":4,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 3 - MUITO ALTO IMPACTO","DESCRICAO":"Deslizamentos, inundações, desabrigados"},{"DATA_STR":"2026-02-04","MUNICIPIO":"Mangaratiba","REDEC":4,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 3 - MUITO ALTO IMPACTO","DESCRICAO":"Deslizamentos, inundações"},{"DATA_STR":"2026-02-04","MUNICIPIO":"Rio de Janeiro","REDEC":1,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 2 - ALTO IMPACTO","DESCRICAO":"Alagamentos, deslizamentos, sirenes"},{"DATA_STR":"2026-02-05","MUNICIPIO":"Laje do Muriaé","REDEC":11,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 3 - MUITO ALTO IMPACTO","DESCRICAO":"Inundações, desabamentos, decretação SE"},{"DATA_STR":"2026-02-05","MUNICIPIO":"Itaocara","REDEC":11,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 3 - MUITO ALTO IMPACTO","DESCRICAO":"Inundações, deslizamentos, desabamentos"},{"DATA_STR":"2026-02-05","MUNICIPIO":"Aperibé","REDEC":11,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 3 - MUITO ALTO IMPACTO","DESCRICAO":"Inundações, deslizamentos, desabamentos"},{"DATA_STR":"2026-02-05","MUNICIPIO":"Miracema","REDEC":11,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 3 - MUITO ALTO IMPACTO","DESCRICAO":"Inundações, deslizamentos"},{"DATA_STR":"2026-02-05","MUNICIPIO":"Cambuci","REDEC":11,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 3 - MUITO ALTO IMPACTO","DESCRICAO":"Inundações, deslizamentos"},{"DATA_STR":"2026-02-05","MUNICIPIO":"Bom Jesus do Itabapoana","REDEC":11,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 3 - MUITO ALTO IMPACTO","DESCRICAO":"Inundações, deslizamentos, desabamentos"},{"DATA_STR":"2026-02-05","MUNICIPIO":"Rio de Janeiro","REDEC":1,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 2 - ALTO IMPACTO","DESCRICAO":"Alagamentos, deslizamentos, sirenes acionadas"},{"DATA_STR":"2026-02-05","MUNICIPIO":"Macaé","REDEC":9,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Quedas de árvores, alagamentos"},{"DATA_STR":"2026-02-05","MUNICIPIO":"Rio das Ostras","REDEC":9,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Quedas de árvores, alagamentos"},{"DATA_STR":"2026-02-05","MUNICIPIO":"Casimiro de Abreu","REDEC":9,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Quedas de árvores, alagamentos"},{"DATA_STR":"2026-02-06","MUNICIPIO":"Porciúncula","REDEC":11,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 3 - MUITO ALTO IMPACTO","DESCRICAO":"Inundações, deslizamentos, desabamentos, decretação SE"},{"DATA_STR":"2026-02-06","MUNICIPIO":"São José de Ubá","REDEC":11,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Quedas de árvores, deslizamentos"},{"DATA_STR":"2026-02-06","MUNICIPIO":"Bom Jardim","REDEC":8,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Quedas de árvores, deslizamentos"},{"DATA_STR":"2026-02-06","MUNICIPIO":"São Fidélis","REDEC":10,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Quedas de árvores, alagamentos"},{"DATA_STR":"2026-02-07","MUNICIPIO":"Eng Paulo de Frontin","REDEC":6,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 3 - MUITO ALTO IMPACTO","DESCRICAO":"Deslizamentos, desabamentos, decretação SE"},{"DATA_STR":"2026-02-07","MUNICIPIO":"Rio de Janeiro","REDEC":1,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Alagamentos, deslizamentos, quedas de árvores"},{"DATA_STR":"2026-02-07","MUNICIPIO":"Nova Iguaçu","REDEC":2,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Deslizamentos, quedas de árvores, alagamentos"},{"DATA_STR":"2026-02-07","MUNICIPIO":"Seropédica","REDEC":2,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Deslizamentos, alagamentos"},{"DATA_STR":"2026-02-08","MUNICIPIO":"Silva Jardim","REDEC":9,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 3 - MUITO ALTO IMPACTO","DESCRICAO":"Inundações, deslizamentos, desabamentos, decretação SE"},{"DATA_STR":"2026-02-08","MUNICIPIO":"Rio Bonito","REDEC":9,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 3 - MUITO ALTO IMPACTO","DESCRICAO":"Inundações, deslizamentos"},{"DATA_STR":"2026-02-08","MUNICIPIO":"Angra dos Reis","REDEC":4,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 2 - ALTO IMPACTO","DESCRICAO":"Deslizamentos, inundações, óbitos"},{"DATA_STR":"2026-02-08","MUNICIPIO":"Rio de Janeiro","REDEC":1,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Alagamentos, quedas de árvores"},{"DATA_STR":"2026-02-08","MUNICIPIO":"Maricá","REDEC":3,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Quedas de árvores, deslizamentos"},{"DATA_STR":"2026-02-09","MUNICIPIO":"Barra Mansa","REDEC":5,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 3 - MUITO ALTO IMPACTO","DESCRICAO":"Deslizamentos, desabamentos, decretação SE"},{"DATA_STR":"2026-02-09","MUNICIPIO":"Volta Redonda","REDEC":5,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Deslizamentos, alagamentos"},{"DATA_STR":"2026-02-09","MUNICIPIO":"Pinheiral","REDEC":5,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Deslizamentos, alagamentos"},{"DATA_STR":"2026-02-09","MUNICIPIO":"Piraí","REDEC":5,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Deslizamentos, alagamentos"},{"DATA_STR":"2026-02-10","MUNICIPIO":"Barra Mansa","REDEC":5,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 3 - MUITO ALTO IMPACTO","DESCRICAO":"Deslizamentos, desabamentos, óbito (menina 5 anos)"},{"DATA_STR":"2026-02-10","MUNICIPIO":"Itaperuna","REDEC":11,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Deslizamentos, quedas de árvores"},{"DATA_STR":"2026-02-10","MUNICIPIO":"Casimiro de Abreu","REDEC":9,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Quedas de árvores, alagamentos"},{"DATA_STR":"2026-02-10","MUNICIPIO":"Rio Bonito","REDEC":9,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Quedas de árvores, alagamentos"},{"DATA_STR":"2026-02-10","MUNICIPIO":"Rio de Janeiro","REDEC":1,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Alagamentos, deslizamentos"},{"DATA_STR":"2026-02-12","MUNICIPIO":"Miracema","REDEC":11,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Quedas de árvores, deslizamentos"},{"DATA_STR":"2026-02-13","MUNICIPIO":"São Gonçalo","REDEC":2,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Alagamentos, deslizamentos, quedas de árvores"},{"DATA_STR":"2026-02-14","MUNICIPIO":"Duque de Caxias","REDEC":2,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Alagamentos, deslizamentos"},{"DATA_STR":"2026-02-14","MUNICIPIO":"Niterói","REDEC":3,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Deslizamentos, quedas de árvores"},{"DATA_STR":"2026-02-14","MUNICIPIO":"Rio de Janeiro","REDEC":1,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Alagamentos, deslizamentos"},{"DATA_STR":"2026-02-15","MUNICIPIO":"Pinheiral","REDEC":5,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 2 - ALTO IMPACTO","DESCRICAO":"Inundações, emergência hídrica"},{"DATA_STR":"2026-02-16","MUNICIPIO":"Duque de Caxias","REDEC":2,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Alagamentos, quedas de árvores"},{"DATA_STR":"2026-02-19","MUNICIPIO":"Rio de Janeiro","REDEC":1,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Alagamentos, deslizamentos, óbito"},{"DATA_STR":"2026-02-21","MUNICIPIO":"Mesquita","REDEC":2,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 3 - MUITO ALTO IMPACTO","DESCRICAO":"Inundações, desabamentos, decretação SE"},{"DATA_STR":"2026-02-21","MUNICIPIO":"Nova Iguaçu","REDEC":2,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 3 - MUITO ALTO IMPACTO","DESCRICAO":"Inundações, desabamentos, decretação SE"},{"DATA_STR":"2026-02-21","MUNICIPIO":"Paraty","REDEC":4,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 3 - MUITO ALTO IMPACTO","DESCRICAO":"Deslizamentos, inundações, decretação SE"},{"DATA_STR":"2026-02-21","MUNICIPIO":"Belford Roxo","REDEC":2,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Alagamentos, deslizamentos"},{"DATA_STR":"2026-02-22","MUNICIPIO":"Paraty","REDEC":4,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 2 - ALTO IMPACTO","DESCRICAO":"Deslizamentos, inundações, óbito"},{"DATA_STR":"2026-02-22","MUNICIPIO":"Rio de Janeiro","REDEC":1,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Alagamentos, deslizamentos"},{"DATA_STR":"2026-02-23","MUNICIPIO":"São João de Meriti","REDEC":2,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 3 - MUITO ALTO IMPACTO","DESCRICAO":"Inundações, desabamentos, óbito, decretação SE"},{"DATA_STR":"2026-02-23","MUNICIPIO":"Mangaratiba","REDEC":4,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 2 - ALTO IMPACTO","DESCRICAO":"Deslizamentos, inundações"},{"DATA_STR":"2026-02-23","MUNICIPIO":"Rio de Janeiro","REDEC":1,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Alagamentos, deslizamentos"},{"DATA_STR":"2026-02-24","MUNICIPIO":"Angra dos Reis","REDEC":4,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Deslizamentos, quedas de árvores"},{"DATA_STR":"2026-02-26","MUNICIPIO":"Angra dos Reis","REDEC":4,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 3 - MUITO ALTO IMPACTO","DESCRICAO":"Soterramento, óbito"},{"DATA_STR":"2026-02-26","MUNICIPIO":"São Fidélis","REDEC":10,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 2 - ALTO IMPACTO","DESCRICAO":"Inundações, deslizamentos"},{"DATA_STR":"2026-02-26","MUNICIPIO":"Campos dos Goytacazes","REDEC":10,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Alagamentos, deslizamentos"},{"DATA_STR":"2026-02-27","MUNICIPIO":"Bom Jesus do Itabapoana","REDEC":11,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Deslizamentos, quedas de árvores"},{"DATA_STR":"2026-02-27","MUNICIPIO":"Itaperuna","REDEC":11,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Deslizamentos, quedas de árvores"},{"DATA_STR":"2026-02-27","MUNICIPIO":"Rio de Janeiro","REDEC":1,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Alagamentos, deslizamentos"},{"DATA_STR":"2026-02-28","MUNICIPIO":"Rio de Janeiro","REDEC":1,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Alagamentos"},{"DATA_STR":"2026-03-04","MUNICIPIO":"Rio de Janeiro","REDEC":1,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Alagamentos, deslizamentos"},{"DATA_STR":"2026-03-06","MUNICIPIO":"Bom Jardim","REDEC":8,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Quedas de árvores, deslizamentos"},{"DATA_STR":"2026-03-06","MUNICIPIO":"Teresópolis","REDEC":7,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Deslizamentos, quedas de árvores"},{"DATA_STR":"2026-03-06","MUNICIPIO":"Petrópolis","REDEC":7,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Deslizamentos, quedas de árvores, alagamentos"},{"DATA_STR":"2026-03-07","MUNICIPIO":"Casimiro de Abreu","REDEC":9,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Quedas de árvores, alagamentos"},{"DATA_STR":"2026-03-07","MUNICIPIO":"Rio das Ostras","REDEC":9,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Quedas de árvores, alagamentos"},{"DATA_STR":"2026-03-12","MUNICIPIO":"Duque de Caxias","REDEC":2,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Alagamentos, deslizamentos"},{"DATA_STR":"2026-03-12","MUNICIPIO":"Nova Iguaçu","REDEC":2,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Deslizamentos, alagamentos"},{"DATA_STR":"2026-03-12","MUNICIPIO":"Rio de Janeiro","REDEC":1,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Alagamentos, deslizamentos"},{"DATA_STR":"2026-03-14","MUNICIPIO":"Angra dos Reis","REDEC":4,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 3 - MUITO ALTO IMPACTO","DESCRICAO":"Deslizamento em obra, óbito"},{"DATA_STR":"2026-03-14","MUNICIPIO":"Paraty","REDEC":4,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Deslizamentos, quedas de árvores"},{"DATA_STR":"2026-03-14","MUNICIPIO":"Petrópolis","REDEC":7,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Deslizamentos, quedas de árvores"},{"DATA_STR":"2026-03-14","MUNICIPIO":"Teresópolis","REDEC":7,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Deslizamentos, quedas de árvores"},{"DATA_STR":"2026-03-18","MUNICIPIO":"Itaocara","REDEC":11,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Quedas de árvores, deslizamentos"},{"DATA_STR":"2026-03-20","MUNICIPIO":"Macaé","REDEC":9,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Alagamentos, quedas de árvores"},{"DATA_STR":"2026-03-20","MUNICIPIO":"Rio das Ostras","REDEC":9,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Alagamentos, quedas de árvores"},{"DATA_STR":"2026-03-20","MUNICIPIO":"Casimiro de Abreu","REDEC":9,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Alagamentos, quedas de árvores"},{"DATA_STR":"2026-03-21","MUNICIPIO":"Petrópolis","REDEC":7,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Deslizamentos, quedas de árvores"},{"DATA_STR":"2026-03-21","MUNICIPIO":"Teresópolis","REDEC":7,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Deslizamentos, quedas de árvores"},{"DATA_STR":"2026-04-01","MUNICIPIO":"Rio de Janeiro","REDEC":1,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Alagamentos, deslizamentos"},{"DATA_STR":"2026-04-04","MUNICIPIO":"Duque de Caxias","REDEC":2,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Alagamentos, deslizamentos"},{"DATA_STR":"2026-04-04","MUNICIPIO":"Nova Iguaçu","REDEC":2,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Deslizamentos, alagamentos"},{"DATA_STR":"2026-04-11","MUNICIPIO":"Petrópolis","REDEC":7,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Deslizamentos, quedas de árvores"},{"DATA_STR":"2026-04-11","MUNICIPIO":"Teresópolis","REDEC":7,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Deslizamentos, quedas de árvores"},{"DATA_STR":"2026-04-15","MUNICIPIO":"Rio de Janeiro","REDEC":1,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 2 - ALTO IMPACTO","DESCRICAO":"Alagamentos, deslizamentos, sirenes"},{"DATA_STR":"2026-04-17","MUNICIPIO":"Bom Jardim","REDEC":8,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Quedas de árvores, deslizamentos"},{"DATA_STR":"2026-04-17","MUNICIPIO":"Sta. M. Madalena","REDEC":8,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Quedas de árvores, deslizamentos"},{"DATA_STR":"2026-04-20","MUNICIPIO":"Angra dos Reis","REDEC":4,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Deslizamentos, quedas de árvores"},{"DATA_STR":"2026-04-22","MUNICIPIO":"Itaocara","REDEC":11,"EVENTO":"Chuvas Intensas","CLASSIFICACAO":"GRAU 1 - MODERADO IMPACTO","DESCRICAO":"Quedas de árvores, deslizamentos"}];
+
+const MESES = {"2025-11":"Nov/25","2025-12":"Dez/25","2026-01":"Jan/26","2026-02":"Fev/26","2026-03":"Mar/26","2026-04":"Abr/26"};
+const C1="#5DCAA5", C2="#EF9F27", C3="#E24B4A";
+let chartMes=null, chartGrau=null;
+
+function getMes(d){ return d.DATA_STR.slice(0,7); }
+
+function filtered(){
+  const m=document.getElementById('fMes').value;
+  const r=document.getElementById('fRedec').value;
+  const g=document.getElementById('fGrau').value;
+  return RAW.filter(d=>(!m||getMes(d)===m)&&(!r||d.REDEC==r)&&(!g||d.CLASSIFICACAO===g));
+}
+
+function resetFilters(){
+  document.getElementById('fMes').value='';
+  document.getElementById('fRedec').value='';
+  document.getElementById('fGrau').value='';
+  render();
+}
+
+function grauClass(c){ return c.includes('GRAU 1')?'g1':c.includes('GRAU 2')?'g2':'g3'; }
+function shortGrau(c){ return c.includes('GRAU 1')?'Grau 1 — Moderado':c.includes('GRAU 2')?'Grau 2 — Alto':'Grau 3 — Muito alto'; }
+function fmtDate(s){ const p=s.split('-'); return `${p[2]}/${p[1]}/${p[0]}`; }
+
+function render(){
+  const data=filtered();
+  const total=data.length;
+  const municSet=new Set(data.map(d=>d.MUNICIPIO));
+  const g3=data.filter(d=>d.CLASSIFICACAO.includes('GRAU 3')).length;
+
+  const byMes={};
+  data.forEach(d=>{
+    const m=getMes(d);
+    if(!byMes[m]) byMes[m]={g1:0,g2:0,g3:0};
+    if(d.CLASSIFICACAO.includes('GRAU 1')) byMes[m].g1++;
+    else if(d.CLASSIFICACAO.includes('GRAU 2')) byMes[m].g2++;
+    else byMes[m].g3++;
+  });
+
+  let peakMes='',peakCount=0;
+  Object.entries(byMes).forEach(([m,v])=>{ const t=v.g1+v.g2+v.g3; if(t>peakCount){peakCount=t;peakMes=m;} });
+
+  document.getElementById('kTotalVal').textContent=total;
+  document.getElementById('kTotalSub').textContent=`${Object.keys(byMes).length} meses com registros`;
+  document.getElementById('kMunicVal').textContent=municSet.size;
+  document.getElementById('kMunicSub').textContent='municípios distintos';
+  document.getElementById('kFevVal').textContent=peakMes?(MESES[peakMes]||peakMes):'—';
+  document.getElementById('kFevSub').textContent=peakCount?`${peakCount} ocorrências registradas`:'—';
+  document.getElementById('kG3Val').textContent=g3;
+  document.getElementById('kG3Sub').textContent=`${total?Math.round(g3/total*100):0}% do total filtrado`;
+  document.getElementById('resultCount').textContent=`${total} registro${total!==1?'s':''}`;
+
+  const allMeses=Object.keys(MESES);
+  const mesLabels=allMeses.map(m=>MESES[m]);
+  const d1=allMeses.map(m=>byMes[m]?byMes[m].g1:0);
+  const d2=allMeses.map(m=>byMes[m]?byMes[m].g2:0);
+  const d3=allMeses.map(m=>byMes[m]?byMes[m].g3:0);
+
+  if(chartMes){ chartMes.destroy(); }
+  chartMes=new Chart(document.getElementById('chartMes'),{
+    type:'bar',
+    data:{labels:mesLabels,datasets:[
+      {label:'Grau 1',data:d1,backgroundColor:C1,stack:'s'},
+      {label:'Grau 2',data:d2,backgroundColor:C2,stack:'s'},
+      {label:'Grau 3',data:d3,backgroundColor:C3,stack:'s'}
+    ]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{footer:items=>{ const t=items.reduce((a,i)=>a+i.raw,0); return `Total: ${t}`; }}}},
+      scales:{
+        x:{grid:{display:false},ticks:{font:{size:11},autoSkip:false,maxRotation:0}},
+        y:{grid:{color:'rgba(128,128,128,0.08)'},ticks:{font:{size:11},stepSize:10},beginAtZero:true}
+      }
+    }
+  });
+
+  const g1t=data.filter(d=>d.CLASSIFICACAO.includes('GRAU 1')).length;
+  const g2t=data.filter(d=>d.CLASSIFICACAO.includes('GRAU 2')).length;
+  const g3t=data.filter(d=>d.CLASSIFICACAO.includes('GRAU 3')).length;
+  if(chartGrau){ chartGrau.destroy(); }
+  chartGrau=new Chart(document.getElementById('chartGrau'),{
+    type:'doughnut',
+    data:{labels:['Grau 1 — Moderado','Grau 2 — Alto','Grau 3 — Muito alto'],datasets:[{data:[g1t,g2t,g3t],backgroundColor:[C1,C2,C3],borderWidth:3,borderColor:'#ffffff'}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,cutout:'60%',
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{ const v=ctx.raw; const tot=g1t+g2t+g3t; return ` ${v} ocorrências (${tot?Math.round(v/tot*100):0}%)`; }}}}
+    }
+  });
+  const gt=g1t+g2t+g3t;
+  document.getElementById('grauLegend').innerHTML=[
+    [C1,'Grau 1',g1t],[C2,'Grau 2',g2t],[C3,'Grau 3',g3t]
+  ].map(([c,l,v])=>`<span><span class="ld" style="background:${c}"></span>${l} — ${gt?Math.round(v/gt*100):0}%</span>`).join('');
+
+  const redecTotals={};const redecG={};
+  data.forEach(d=>{
+    const r=d.REDEC;
+    if(!redecTotals[r]) redecTotals[r]=0;
+    if(!redecG[r]) redecG[r]={g1:0,g2:0,g3:0};
+    redecTotals[r]++;
+    if(d.CLASSIFICACAO.includes('GRAU 1')) redecG[r].g1++;
+    else if(d.CLASSIFICACAO.includes('GRAU 2')) redecG[r].g2++;
+    else redecG[r].g3++;
+  });
+  const sortedRedec=Object.keys(redecTotals).map(Number).sort((a,b)=>redecTotals[b]-redecTotals[a]);
+  const maxR=sortedRedec.length?redecTotals[sortedRedec[0]]:1;
+  const fMesVal=document.getElementById('fMes').value;
+  const isFev=fMesVal==='2026-02';
+  document.getElementById('redecFebLabel').innerHTML=isFev?'<span class="feb-badge">⚠ Fev/2026</span>':'';
+
+  const barsDiv=document.getElementById('redecBars');
+  if(!sortedRedec.length){barsDiv.innerHTML='<p class="empty-state">Sem dados para os filtros selecionados.</p>';}
+  else{
+    barsDiv.innerHTML=sortedRedec.map(r=>{
+      const g=redecG[r]; const tot=redecTotals[r];
+      const pct=Math.round(tot/maxR*100);
+      const w1=Math.round(g.g1/tot*pct),w2=Math.round(g.g2/tot*pct),w3=Math.round(g.g3/tot*pct);
+      const isPeak=isFev&&r===11;
+      return `<div class="redec-row${isPeak?' is-peak':''}">
+        <span class="redec-lbl">REDEC ${r}</span>
+        <div class="redec-track">
+          <div class="redec-seg" style="width:${w1}%;background:${C1}"></div>
+          <div class="redec-seg" style="width:${w2}%;background:${C2}"></div>
+          <div class="redec-seg" style="width:${w3}%;background:${C3}"></div>
+        </div>
+        <span class="redec-count">${tot}</span>
+      </div>`;
+    }).join('');
+  }
+
+  const municCount={};
+  data.forEach(d=>{ municCount[d.MUNICIPIO]=(municCount[d.MUNICIPIO]||0)+1; });
+  const topMunic=Object.entries(municCount).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const maxM=topMunic.length?topMunic[0][1]:1;
+  document.getElementById('topMunic').innerHTML=topMunic.map(([m,c])=>{
+    const pct=Math.round(c/maxM*100);
+    return `<div style="padding:8px 10px;background:var(--surface2);border-radius:8px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px">
+        <span style="font-size:12px;font-weight:600;color:var(--text)">${m}</span>
+        <span style="font-size:11px;color:var(--text2)">${c}</span>
+      </div>
+      <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden">
+        <div style="width:${pct}%;height:100%;background:var(--blue-mid);border-radius:2px"></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const tbody=document.getElementById('tableBody');
+  document.getElementById('tableCount').textContent=`— ${total} registro${total!==1?'s':''}`;
+  if(!data.length){tbody.innerHTML='<tr><td colspan="6" class="empty-state">Sem registros para os filtros selecionados.</td></tr>';return;}
+  tbody.innerHTML=[...data].reverse().map(d=>`<tr>
+    <td style="white-space:nowrap;color:var(--text2)">${fmtDate(d.DATA_STR)}</td>
+    <td style="font-weight:500">${d.MUNICIPIO}</td>
+    <td style="text-align:center;color:var(--text2)">REDEC ${d.REDEC}</td>
+    <td style="color:var(--text2)">${d.EVENTO}</td>
+    <td><span class="badge ${grauClass(d.CLASSIFICACAO)}">${shortGrau(d.CLASSIFICACAO)}</span></td>
+    <td style="color:var(--text3);font-size:11px;max-width:240px">${d.DESCRICAO}</td>
+  </tr>`).join('');
+}
+
+const redecSel=document.getElementById('fRedec');
+[1,2,3,4,5,6,7,8,9,10,11].forEach(r=>{
+  const o=document.createElement('option');
+  o.value=r;o.textContent=`REDEC ${r}`;redecSel.appendChild(o);
+});
+
+render();
+</script>
+</body>
+</html>
